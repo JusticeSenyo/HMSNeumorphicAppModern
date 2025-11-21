@@ -39,4 +39,58 @@ public class HMSNeumorphicAppModern extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(HMSNeumorphicAppModern::new);
     }
+
+
+// ------------------- Notification Timer -------------------
+       private void setupNotificationTimer() {
+        notificationTimer = new javax.swing.Timer(300_000, e -> checkNotifications()); // Every 5 minutes
+        notificationTimer.setInitialDelay(5000); // Check 5 seconds after login
+        notificationTimer.start();
+    }
+
+    private void checkNotifications() {
+        if (appointments.isEmpty() || userRole == null) return;
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date today = new Date();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(today);
+        cal.add(Calendar.DATE, 1);
+        Date tomorrow = cal.getTime();
+
+        int todayCount = 0;
+        int tomorrowCount = 0;
+
+        for (Appointment appt : appointments) {
+            try {
+                Date apptDate = sdf.parse(appt.date);
+                String todayStr = sdf.format(today);
+                String tomorrowStr = sdf.format(tomorrow);
+                String apptStr = sdf.format(apptDate);
+
+                if (apptStr.equals(todayStr)) {
+                    todayCount++;
+                } else if (apptStr.equals(tomorrowStr)) {
+                    tomorrowCount++;
+                }
+            } catch (ParseException ex) {
+                // Skip invalid dates
+            }
+        }
+
+        if (todayCount > 0 || tomorrowCount > 0) {
+            StringBuilder msg = new StringBuilder();
+            if (todayCount > 0) {
+                msg.append("Today: ").append(todayCount).append(" appointment(s)\n");
+            }
+            if (tomorrowCount > 0) {
+                msg.append("Tomorrow: ").append(tomorrowCount).append(" appointment(s)");
+            }
+            JOptionPane.showMessageDialog(this, msg.toString(),
+                    "Appointment Reminder", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    
+
 }
