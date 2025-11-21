@@ -9,14 +9,14 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-// Hospital Appointment Scheduler - Stage 16: SQLite Database Integration
+// Hospital Management System - Modern UI with Database
 public class HMSNeumorphicAppModern extends JFrame {
 
     private String userRole;
     private CardLayout cardLayout;
     private JPanel mainPanel;
     private javax.swing.Timer notificationTimer;
-    private DatabaseManager db; // DATABASE MANAGER
+    private DatabaseManager db;
 
     private List<Patient> patients = new ArrayList<>();
     private List<Doctor> doctors = new ArrayList<>();
@@ -38,20 +38,29 @@ public class HMSNeumorphicAppModern extends JFrame {
     private DefaultTableModel doctorPatientsModel;
     private DefaultTableModel doctorAppointmentsModel;
 
+    // Color Scheme
+    private final Color PRIMARY_COLOR = new Color(41, 128, 185);
+    private final Color SECONDARY_COLOR = new Color(52, 152, 219);
+    private final Color ACCENT_COLOR = new Color(46, 204, 113);
+    private final Color BACKGROUND_COLOR = new Color(245, 245, 245);
+    private final Color CARD_COLOR = Color.WHITE;
+    private final Color TEXT_PRIMARY = new Color(51, 51, 51);
+
     public HMSNeumorphicAppModern() {
-        setTitle("Hospital Appointment Scheduler - Neumorphic Design");
+        setTitle("Hospital Management System");
         setSize(1300, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Initialize database and load data
+        // Initialize database
         db = new DatabaseManager();
         loadDataFromDatabase();
 
         mainPanel = new JPanel();
         cardLayout = new CardLayout();
         mainPanel.setLayout(cardLayout);
+        mainPanel.setBackground(BACKGROUND_COLOR);
         add(mainPanel, BorderLayout.CENTER);
 
         initServices();
@@ -60,30 +69,27 @@ public class HMSNeumorphicAppModern extends JFrame {
         initDoctorDashboard();
         setupNotificationTimer();
 
-        // Close database on window close
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                db.close();
-                System.exit(0);
+                if (db != null) {
+                    db.close();
+                }
             }
         });
 
         setVisible(true);
     }
 
-    // Load all data from database
     private void loadDataFromDatabase() {
         patients = db.loadPatients();
         doctors = db.loadDoctors();
         appointments = db.loadAppointments();
         bills = db.loadBills();
-        System.out.println("=== Data loaded from database ===");
     }
 
     private void setupNotificationTimer() {
-        notificationTimer = new javax.swing.Timer(300_000, e -> checkNotifications());
-        notificationTimer.setInitialDelay(5000);
+        notificationTimer = new javax.swing.Timer(300000, e -> checkNotifications());
         notificationTimer.start();
     }
 
@@ -108,25 +114,18 @@ public class HMSNeumorphicAppModern extends JFrame {
                 String tomorrowStr = sdf.format(tomorrow);
                 String apptStr = sdf.format(apptDate);
 
-                if (apptStr.equals(todayStr)) {
-                    todayCount++;
-                } else if (apptStr.equals(tomorrowStr)) {
-                    tomorrowCount++;
-                }
-            } catch (ParseException ex) {
-            }
+                if (apptStr.equals(todayStr)) todayCount++;
+                if (apptStr.equals(tomorrowStr)) tomorrowCount++;
+            } catch (ParseException ex) {}
         }
 
         if (todayCount > 0 || tomorrowCount > 0) {
             StringBuilder msg = new StringBuilder();
-            if (todayCount > 0) {
-                msg.append("Today: ").append(todayCount).append(" appointment(s)\n");
-            }
-            if (tomorrowCount > 0) {
-                msg.append("Tomorrow: ").append(tomorrowCount).append(" appointment(s)");
-            }
-            JOptionPane.showMessageDialog(this, msg.toString(),
-                    "Appointment Reminder", JOptionPane.INFORMATION_MESSAGE);
+            if (todayCount > 0) msg.append("Today: ").append(todayCount).append(" appointment(s)\n");
+            if (tomorrowCount > 0) msg.append("Tomorrow: ").append(tomorrowCount).append(" appointment(s)");
+            
+            JOptionPane.showMessageDialog(this, msg.toString(), "Appointment Reminder", 
+                JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -141,28 +140,38 @@ public class HMSNeumorphicAppModern extends JFrame {
     }
 
     private void initLoginPage() {
-        JPanel loginPanel = new JPanel();
-        loginPanel.setBackground(new Color(235, 235, 235));
-        loginPanel.setLayout(new GridBagLayout());
+        JPanel loginPanel = new JPanel(new GridBagLayout());
+        loginPanel.setBackground(BACKGROUND_COLOR);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        JLabel titleLabel = new JLabel("Hospital Appointment Scheduler");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        titleLabel.setForeground(new Color(70, 70, 70));
+        JPanel loginCard = new JPanel();
+        loginCard.setBackground(CARD_COLOR);
+        loginCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 220, 220)),
+            BorderFactory.createEmptyBorder(30, 30, 30, 30)
+        ));
+        loginCard.setLayout(new GridBagLayout());
+
+        JLabel titleLabel = new JLabel("Hospital Management System");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(PRIMARY_COLOR);
 
         JLabel userLabel = new JLabel("Username:");
         JTextField userField = new JTextField(15);
+        styleTextField(userField);
 
         JLabel passLabel = new JLabel("Password:");
         JPasswordField passField = new JPasswordField(15);
+        styleTextField(passField);
 
         JLabel roleLabel = new JLabel("Role:");
         String[] roles = {"Administrator", "Doctor"};
         JComboBox<String> roleCombo = new JComboBox<>(roles);
+        styleComboBox(roleCombo);
 
-        JButton loginBtn = new JButton("Login");
-        applyNeumorphicButton(loginBtn);
+        JButton loginBtn = createStyledButton("Login", PRIMARY_COLOR);
+        loginBtn.setPreferredSize(new Dimension(200, 40));
 
         loginBtn.addActionListener(e -> {
             String username = userField.getText().trim();
@@ -182,7 +191,7 @@ public class HMSNeumorphicAppModern extends JFrame {
             }
 
             if (!valid) {
-                JOptionPane.showMessageDialog(this, "Invalid username or password!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Invalid credentials!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -197,247 +206,275 @@ public class HMSNeumorphicAppModern extends JFrame {
         });
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-        loginPanel.add(titleLabel, gbc);
+        loginCard.add(titleLabel, gbc);
+        
         gbc.gridwidth = 1; gbc.gridy++;
-        loginPanel.add(userLabel, gbc); gbc.gridx = 1; loginPanel.add(userField, gbc);
+        loginCard.add(userLabel, gbc);
+        gbc.gridx = 1;
+        loginCard.add(userField, gbc);
+        
         gbc.gridx = 0; gbc.gridy++;
-        loginPanel.add(passLabel, gbc); gbc.gridx = 1; loginPanel.add(passField, gbc);
+        loginCard.add(passLabel, gbc);
+        gbc.gridx = 1;
+        loginCard.add(passField, gbc);
+        
         gbc.gridx = 0; gbc.gridy++;
-        loginPanel.add(roleLabel, gbc); gbc.gridx = 1; loginPanel.add(roleCombo, gbc);
+        loginCard.add(roleLabel, gbc);
+        gbc.gridx = 1;
+        loginCard.add(roleCombo, gbc);
+        
         gbc.gridx = 0; gbc.gridy++; gbc.gridwidth = 2;
-        loginPanel.add(loginBtn, gbc);
+        loginCard.add(loginBtn, gbc);
 
+        loginPanel.add(loginCard);
         mainPanel.add(loginPanel, "login");
-        cardLayout.show(mainPanel, "login");
     }
 
-    private void applyNeumorphicButton(JButton button) {
-        button.setBackground(new Color(225, 225, 225));
-        button.setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
-        button.setFocusPainted(false);
+    private void styleTextField(JComponent field) {
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200)),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        field.setBackground(new Color(250, 250, 250));
+    }
+
+    private void styleComboBox(JComboBox<?> combo) {
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        combo.setBackground(Color.WHITE);
+    }
+
+    private JButton createStyledButton(String text, Color color) {
+        JButton button = new JButton(text);
         button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setForeground(new Color(50, 50, 50));
-        button.setOpaque(true);
-        button.setBorderPainted(false);
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(color.darker());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(color);
+            }
+        });
+        
+        return button;
     }
 
     private void initAdminDashboard() {
         JPanel adminPanel = new JPanel(new BorderLayout());
-        adminPanel.setBackground(new Color(235, 235, 235));
+        adminPanel.setBackground(BACKGROUND_COLOR);
 
-        JLabel label = new JLabel("Administrator Dashboard");
-        label.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        label.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        JButton logoutBtn = new JButton("Logout");
-        applyNeumorphicButton(logoutBtn);
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(PRIMARY_COLOR);
+        headerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
+        
+        JLabel titleLabel = new JLabel("Administrator Dashboard");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setForeground(Color.WHITE);
+        
+        JButton logoutBtn = createStyledButton("Logout", new Color(120, 120, 120));
         logoutBtn.addActionListener(e -> cardLayout.show(mainPanel, "login"));
+        
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(logoutBtn, BorderLayout.EAST);
+        adminPanel.add(headerPanel, BorderLayout.NORTH);
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(235, 235, 235));
-        topPanel.add(label, BorderLayout.WEST);
-        topPanel.add(logoutBtn, BorderLayout.EAST);
-
-        adminPanel.add(topPanel, BorderLayout.NORTH);
-
+        // Tabs
         JTabbedPane tabbedPane = new JTabbedPane();
-
+        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
         tabbedPane.add("Patients", createPatientsTab(true));
         tabbedPane.add("Appointments", createAppointmentsTab(true));
-
-        JPanel doctorsTab = new JPanel(new BorderLayout());
-        JButton addDoctorBtn = new JButton("Add Doctor");
-        applyNeumorphicButton(addDoctorBtn);
-        addDoctorBtn.addActionListener(e -> addDoctorDialog());
-
-        String[] doctorColumns = {"Name", "Specialty", "Phone"};
-        adminDoctorsModel = new DefaultTableModel(doctorColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        adminDoctorsTable = new JTable(adminDoctorsModel);
-        adminDoctorsTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        adminDoctorsTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        adminDoctorsTable.setRowHeight(25);
-        adminDoctorsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-        JPanel searchPanel = createSearchPanel(adminDoctorsTable, adminDoctorsModel);
-        JPanel topDoctorPanel = new JPanel(new BorderLayout());
-        topDoctorPanel.add(addDoctorBtn, BorderLayout.WEST);
-        topDoctorPanel.add(searchPanel, BorderLayout.EAST);
-
-        doctorsTab.add(topDoctorPanel, BorderLayout.NORTH);
-        doctorsTab.add(new JScrollPane(adminDoctorsTable), BorderLayout.CENTER);
-        tabbedPane.add("Doctors", doctorsTab);
-
-        JPanel billingTab = new JPanel(new BorderLayout());
-        JButton createBillBtn = new JButton("Create Bill");
-        applyNeumorphicButton(createBillBtn);
-        createBillBtn.addActionListener(e -> createBillDialog());
-
-        String[] billingColumns = {"Patient", "Services", "Total"};
-        adminBillingModel = new DefaultTableModel(billingColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        adminBillingTable = new JTable(adminBillingModel);
-        adminBillingTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        adminBillingTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        adminBillingTable.setRowHeight(25);
-        adminBillingTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-        JPanel searchBillingPanel = createSearchPanel(adminBillingTable, adminBillingModel);
-        JPanel topBillingPanel = new JPanel(new BorderLayout());
-        topBillingPanel.add(createBillBtn, BorderLayout.WEST);
-        topBillingPanel.add(searchBillingPanel, BorderLayout.EAST);
-
-        billingTab.add(topBillingPanel, BorderLayout.NORTH);
-        billingTab.add(new JScrollPane(adminBillingTable), BorderLayout.CENTER);
-        tabbedPane.add("Billing", billingTab);
+        tabbedPane.add("Doctors", createDoctorsTab());
+        tabbedPane.add("Billing", createBillingTab());
 
         adminPanel.add(tabbedPane, BorderLayout.CENTER);
         mainPanel.add(adminPanel, "admin");
     }
 
     private JPanel createPatientsTab(boolean isAdmin) {
-        JPanel patientsTab = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        String[] patientColumns = {"Name", "Age", "Gender", "Blood Type", "Phone", "Email"};
-        DefaultTableModel model;
-        JTable table;
-
+        String[] columns = {"Name", "Age", "Gender", "Blood Type", "Phone", "Email"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        
+        JTable table = new JTable(model);
+        styleTable(table);
+        
         if (isAdmin) {
-            adminPatientsModel = new DefaultTableModel(patientColumns, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            adminPatientsTable = new JTable(adminPatientsModel);
-            table = adminPatientsTable;
-            model = adminPatientsModel;
+            adminPatientsModel = model;
+            adminPatientsTable = table;
         } else {
-            doctorPatientsModel = new DefaultTableModel(patientColumns, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            doctorPatientsTable = new JTable(doctorPatientsModel);
-            table = doctorPatientsTable;
-            model = doctorPatientsModel;
+            doctorPatientsModel = model;
+            doctorPatientsTable = table;
         }
 
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        table.setRowHeight(25);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-        JPanel searchPanel = createSearchPanel(table, model);
-
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(BACKGROUND_COLOR);
+        
         if (!isAdmin) {
-            JButton addPatientBtn = new JButton("Add New Patient");
-            applyNeumorphicButton(addPatientBtn);
-            addPatientBtn.addActionListener(e -> addPatientDialog());
-
-            JPanel topPanel = new JPanel(new BorderLayout());
-            topPanel.add(addPatientBtn, BorderLayout.WEST);
-            topPanel.add(searchPanel, BorderLayout.EAST);
-            patientsTab.add(topPanel, BorderLayout.NORTH);
-        } else {
-            patientsTab.add(searchPanel, BorderLayout.NORTH);
+            JButton addBtn = createStyledButton("Add Patient", ACCENT_COLOR);
+            addBtn.addActionListener(e -> showAddPatientDialog());
+            topPanel.add(addBtn, BorderLayout.WEST);
         }
-
-        patientsTab.add(new JScrollPane(table), BorderLayout.CENTER);
-        return patientsTab;
+        
+        JPanel searchPanel = createSearchPanel(table, model);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+        
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        
+        return panel;
     }
 
     private JPanel createAppointmentsTab(boolean isAdmin) {
-        JPanel appointmentsTab = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        String[] appointmentColumns = {"Patient", "Doctor", "Type", "Date", "Time", "Notes"};
-        DefaultTableModel model;
-        JTable table;
-
+        String[] columns = {"Patient", "Doctor", "Type", "Date", "Time", "Notes"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        
+        JTable table = new JTable(model);
+        styleTable(table);
+        
         if (isAdmin) {
-            adminAppointmentsModel = new DefaultTableModel(appointmentColumns, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            adminAppointmentsTable = new JTable(adminAppointmentsModel);
-            table = adminAppointmentsTable;
-            model = adminAppointmentsModel;
+            adminAppointmentsModel = model;
+            adminAppointmentsTable = table;
         } else {
-            doctorAppointmentsModel = new DefaultTableModel(appointmentColumns, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            doctorAppointmentsTable = new JTable(doctorAppointmentsModel);
-            table = doctorAppointmentsTable;
-            model = doctorAppointmentsModel;
+            doctorAppointmentsModel = model;
+            doctorAppointmentsTable = table;
         }
 
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        table.setRowHeight(25);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-        JPanel searchPanel = createSearchPanel(table, model);
-
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(BACKGROUND_COLOR);
+        
         if (!isAdmin) {
-            JButton addAppointmentBtn = new JButton("Schedule Appointment");
-            applyNeumorphicButton(addAppointmentBtn);
-            addAppointmentBtn.addActionListener(e -> addAppointmentDialog());
-
-            JPanel topPanel = new JPanel(new BorderLayout());
-            topPanel.add(addAppointmentBtn, BorderLayout.WEST);
-            topPanel.add(searchPanel, BorderLayout.EAST);
-            appointmentsTab.add(topPanel, BorderLayout.NORTH);
-        } else {
-            appointmentsTab.add(searchPanel, BorderLayout.NORTH);
+            JButton addBtn = createStyledButton("Schedule Appointment", ACCENT_COLOR);
+            addBtn.addActionListener(e -> showAddAppointmentDialog());
+            topPanel.add(addBtn, BorderLayout.WEST);
         }
+        
+        JPanel searchPanel = createSearchPanel(table, model);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+        
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        
+        return panel;
+    }
 
-        appointmentsTab.add(new JScrollPane(table), BorderLayout.CENTER);
-        return appointmentsTab;
+    private JPanel createDoctorsTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        String[] columns = {"Name", "Specialty", "Phone"};
+        adminDoctorsModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        
+        adminDoctorsTable = new JTable(adminDoctorsModel);
+        styleTable(adminDoctorsTable);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(BACKGROUND_COLOR);
+        
+        JButton addBtn = createStyledButton("Add Doctor", ACCENT_COLOR);
+        addBtn.addActionListener(e -> showAddDoctorDialog());
+        
+        JPanel searchPanel = createSearchPanel(adminDoctorsTable, adminDoctorsModel);
+        
+        topPanel.add(addBtn, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+        
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(new JScrollPane(adminDoctorsTable), BorderLayout.CENTER);
+        
+        return panel;
+    }
+
+    private JPanel createBillingTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BACKGROUND_COLOR);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        String[] columns = {"Patient", "Services", "Total"};
+        adminBillingModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        
+        adminBillingTable = new JTable(adminBillingModel);
+        styleTable(adminBillingTable);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(BACKGROUND_COLOR);
+        
+        JButton addBtn = createStyledButton("Create Bill", ACCENT_COLOR);
+        addBtn.addActionListener(e -> showCreateBillDialog());
+        
+        JPanel searchPanel = createSearchPanel(adminBillingTable, adminBillingModel);
+        
+        topPanel.add(addBtn, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+        
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(new JScrollPane(adminBillingTable), BorderLayout.CENTER);
+        
+        return panel;
+    }
+
+    private void styleTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        table.getTableHeader().setBackground(PRIMARY_COLOR);
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.setRowHeight(25);
+        table.setSelectionBackground(new Color(220, 240, 255));
     }
 
     private JPanel createSearchPanel(JTable table, DefaultTableModel model) {
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        searchPanel.setBackground(new Color(235, 235, 235));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panel.setBackground(BACKGROUND_COLOR);
 
-        JLabel searchLabel = new JLabel("Search:");
         JTextField searchField = new JTextField(15);
-        JButton searchBtn = new JButton("Search");
-        applyNeumorphicButton(searchBtn);
+        styleTextField(searchField);
+        
+        JButton searchBtn = createStyledButton("Search", PRIMARY_COLOR);
 
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
 
-        Runnable doSearch = () -> {
+        searchBtn.addActionListener(e -> {
             String text = searchField.getText().trim();
             if (text.isEmpty()) {
                 sorter.setRowFilter(null);
             } else {
                 sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
             }
-        };
+        });
 
-        searchBtn.addActionListener(e -> doSearch.run());
-        searchField.addActionListener(e -> doSearch.run());
+        panel.add(new JLabel("Search:"));
+        panel.add(searchField);
+        panel.add(searchBtn);
 
-        searchPanel.add(searchLabel);
-        searchPanel.add(searchField);
-        searchPanel.add(searchBtn);
-
-        return searchPanel;
+        return panel;
     }
 
     private void refreshAdminDashboard() {
@@ -452,236 +489,57 @@ public class HMSNeumorphicAppModern extends JFrame {
         updateAppointmentsTable(doctorAppointmentsModel);
     }
 
-    private void addDoctorDialog() {
+    private void showAddDoctorDialog() {
         JDialog dialog = new JDialog(this, "Add Doctor", true);
         dialog.setSize(350, 250);
-        dialog.setLayout(new GridLayout(4, 2, 5, 5));
         dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new GridLayout(4, 2, 10, 10));
 
         JTextField nameField = new JTextField();
         JTextField specialtyField = new JTextField();
         JTextField phoneField = new JTextField();
 
-        dialog.add(new JLabel("Name:")); dialog.add(nameField);
-        dialog.add(new JLabel("Specialty:")); dialog.add(specialtyField);
-        dialog.add(new JLabel("Phone:")); dialog.add(phoneField);
+        dialog.add(new JLabel("Name:"));
+        dialog.add(nameField);
+        dialog.add(new JLabel("Specialty:"));
+        dialog.add(specialtyField);
+        dialog.add(new JLabel("Phone:"));
+        dialog.add(phoneField);
 
-        JButton saveBtn = new JButton("Save");
-        applyNeumorphicButton(saveBtn);
+        JButton saveBtn = createStyledButton("Save", ACCENT_COLOR);
         saveBtn.addActionListener(e -> {
             String name = nameField.getText().trim();
             String specialty = specialtyField.getText().trim();
             String phone = phoneField.getText().trim();
 
             if (name.isEmpty() || specialty.isEmpty() || phone.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "All fields are required!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "All fields are required!");
                 return;
             }
 
             if (!isValidGhanaPhone(phone)) {
-                JOptionPane.showMessageDialog(dialog, "Phone must be 10 digits starting with 02, 03, 04, or 05!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid Ghana phone number!");
                 return;
             }
 
-            Doctor d = new Doctor(name, specialty, phone);
-            doctors.add(d);
-            db.saveDoctor(d); // SAVE TO DATABASE
+            Doctor doctor = new Doctor(name, specialty, phone);
+            doctors.add(doctor);
+            db.saveDoctor(doctor);
             updateDoctorsTable();
-            JOptionPane.showMessageDialog(dialog, "Doctor added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            dialog.dispose();
-        });
-        dialog.add(new JLabel()); dialog.add(saveBtn);
-        dialog.setVisible(true);
-    }
-
-    private void updateDoctorsTable() {
-        adminDoctorsModel.setRowCount(0);
-        for (Doctor d : doctors) {
-            adminDoctorsModel.addRow(new Object[]{d.name, d.specialty, d.phone});
-        }
-    }
-
-    private void createBillDialog() {
-        if (patients.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No patients available for billing.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        JDialog dialog = new JDialog(this, "Create Bill", true);
-        dialog.setSize(450, 400);
-        dialog.setLayout(new BorderLayout(10, 10));
-        dialog.setLocationRelativeTo(this);
-
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
-        formPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        JComboBox<String> patientCombo = new JComboBox<>();
-        for (Patient p : patients) patientCombo.addItem(p.name);
-
-        JList<String> servicesList = new JList<>();
-        DefaultListModel<String> servicesModel = new DefaultListModel<>();
-        for (Service s : services) {
-            servicesModel.addElement(s.name + " - $" + s.price);
-        }
-        servicesList.setModel(servicesModel);
-        servicesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
-        formPanel.add(new JLabel("Patient:"));
-        formPanel.add(patientCombo);
-        formPanel.add(new JLabel("Services (Select multiple):"));
-        formPanel.add(new JScrollPane(servicesList));
-
-        JButton saveBtn = new JButton("Generate Bill");
-        applyNeumorphicButton(saveBtn);
-        saveBtn.addActionListener(e -> {
-            List<Integer> selectedIndices = servicesList.getSelectedValuesList()
-                    .stream()
-                    .map(servicesModel::indexOf)
-                    .toList();
-
-            if (selectedIndices.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Please select at least one service.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            List<Service> selectedServices = new ArrayList<>();
-            double total = 0;
-            for (int idx : selectedIndices) {
-                selectedServices.add(services.get(idx));
-                total += services.get(idx).price;
-            }
-
-            Bill bill = new Bill((String) patientCombo.getSelectedItem(), selectedServices, total);
-            bills.add(bill);
-            db.saveBill(bill); // SAVE TO DATABASE
-            updateBillingTable();
-            JOptionPane.showMessageDialog(dialog, "Bill created! Total: $" + total, "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(dialog, "Doctor added successfully!");
             dialog.dispose();
         });
 
-        dialog.add(formPanel, BorderLayout.CENTER);
-        dialog.add(saveBtn, BorderLayout.SOUTH);
+        dialog.add(new JLabel());
+        dialog.add(saveBtn);
         dialog.setVisible(true);
     }
 
-    private void updateBillingTable() {
-        adminBillingModel.setRowCount(0);
-        for (Bill b : bills) {
-            StringBuilder servicesStr = new StringBuilder();
-            for (int i = 0; i < b.services.size(); i++) {
-                servicesStr.append(b.services.get(i).name);
-                if (i < b.services.size() - 1) servicesStr.append(", ");
-            }
-            adminBillingModel.addRow(new Object[]{b.patientName, servicesStr.toString(), "$" + b.total});
-        }
-    }
-
-    private void initDoctorDashboard() {
-        JPanel doctorPanel = new JPanel(new BorderLayout());
-        doctorPanel.setBackground(new Color(235, 235, 235));
-
-        JLabel label = new JLabel("Doctor Dashboard");
-        label.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        label.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        JButton logoutBtn = new JButton("Logout");
-        applyNeumorphicButton(logoutBtn);
-        logoutBtn.addActionListener(e -> cardLayout.show(mainPanel, "login"));
-
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(235, 235, 235));
-        topPanel.add(label, BorderLayout.WEST);
-        topPanel.add(logoutBtn, BorderLayout.EAST);
-
-        doctorPanel.add(topPanel, BorderLayout.NORTH);
-
-        JTabbedPane tabbedPane = new JTabbedPane();
-
-        tabbedPane.add("Patients", createPatientsTab(false));
-        tabbedPane.add("Appointments", createAppointmentsTab(false));
-
-        doctorPanel.add(tabbedPane, BorderLayout.CENTER);
-        mainPanel.add(doctorPanel, "doctor");
-    }
-
-    private boolean isValidGhanaPhone(String phone) {
-        if (phone.length() != 10) return false;
-        if (!phone.matches("\\d{10}")) return false;
-        String prefix = phone.substring(0, 2);
-        return prefix.equals("02") || prefix.equals("03") || prefix.equals("04") || prefix.equals("05");
-    }
-
-    private boolean isValidEmail(String email) {
-        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-    }
-
-    private boolean isValidAge(String age) {
-        try {
-            int ageInt = Integer.parseInt(age);
-            return ageInt >= 1 && ageInt <= 150;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private boolean isValidDate(String date) {
-        if (!date.matches("\\d{2}/\\d{2}/\\d{4}")) return false;
-
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-            sdf.setLenient(false);
-            java.util.Date inputDate = sdf.parse(date);
-
-            java.util.Date today = new java.util.Date();
-
-            Calendar cal1 = Calendar.getInstance();
-            Calendar cal2 = Calendar.getInstance();
-            cal1.setTime(today);
-            cal2.setTime(inputDate);
-
-            cal1.set(Calendar.HOUR_OF_DAY, 0);
-            cal1.set(Calendar.MINUTE, 0);
-            cal1.set(Calendar.SECOND, 0);
-            cal1.set(Calendar.MILLISECOND, 0);
-
-            cal2.set(Calendar.HOUR_OF_DAY, 0);
-            cal2.set(Calendar.MINUTE, 0);
-            cal2.set(Calendar.SECOND, 0);
-            cal2.set(Calendar.MILLISECOND, 0);
-
-            return !cal2.before(cal1);
-        } catch (ParseException e) {
-            return false;
-        }
-    }
-
-    private boolean isValidTime(String time) {
-        if (!time.matches("\\d{2}:\\d{2}")) return false;
-
-        String[] parts = time.split(":");
-        try {
-            int hour = Integer.parseInt(parts[0]);
-            int minute = Integer.parseInt(parts[1]);
-            return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private boolean isDuplicatePatient(String name, String phone) {
-        for (Patient p : patients) {
-            if (p.name.equalsIgnoreCase(name) && p.phone.equals(phone)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void addPatientDialog() {
+    private void showAddPatientDialog() {
         JDialog dialog = new JDialog(this, "Add Patient", true);
         dialog.setSize(400, 500);
-        dialog.setLayout(new GridLayout(11, 2, 5, 5));
         dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new GridLayout(11, 2, 5, 5));
 
         JTextField nameField = new JTextField();
         JTextField ageField = new JTextField();
@@ -694,7 +552,7 @@ public class HMSNeumorphicAppModern extends JFrame {
         JTextField medicalField = new JTextField();
         JTextField allergyField = new JTextField();
 
-        dialog.add(new JLabel("Full Name:")); dialog.add(nameField);
+        dialog.add(new JLabel("Name:")); dialog.add(nameField);
         dialog.add(new JLabel("Age:")); dialog.add(ageField);
         dialog.add(new JLabel("Gender:")); dialog.add(genderField);
         dialog.add(new JLabel("Blood Type:")); dialog.add(bloodField);
@@ -705,8 +563,7 @@ public class HMSNeumorphicAppModern extends JFrame {
         dialog.add(new JLabel("Medical History:")); dialog.add(medicalField);
         dialog.add(new JLabel("Allergies:")); dialog.add(allergyField);
 
-        JButton saveBtn = new JButton("Save");
-        applyNeumorphicButton(saveBtn);
+        JButton saveBtn = createStyledButton("Save", ACCENT_COLOR);
         saveBtn.addActionListener(e -> {
             String name = nameField.getText().trim();
             String age = ageField.getText().trim();
@@ -714,64 +571,52 @@ public class HMSNeumorphicAppModern extends JFrame {
             String email = emailField.getText().trim();
 
             if (name.isEmpty() || age.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Name and Age are required!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Name and Age are required!");
                 return;
             }
 
             if (!isValidAge(age)) {
-                JOptionPane.showMessageDialog(dialog, "Age must be between 1 and 150!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid age!");
                 return;
             }
 
             if (!phone.isEmpty() && !isValidGhanaPhone(phone)) {
-                JOptionPane.showMessageDialog(dialog, "Phone must be 10 digits starting with 02, 03, 04, or 05!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid Ghana phone number!");
                 return;
             }
 
             if (!email.isEmpty() && !isValidEmail(email)) {
-                JOptionPane.showMessageDialog(dialog, "Invalid email format!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid email!");
                 return;
             }
 
-            if (isDuplicatePatient(name, phone)) {
-                JOptionPane.showMessageDialog(dialog, "Patient with this name and phone already exists!", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            Patient p = new Patient(
-                    name, age, genderField.getText(), bloodField.getText(),
+            Patient patient = new Patient(name, age, genderField.getText(), bloodField.getText(),
                     phone, email, addressField.getText(), emergencyField.getText(),
-                    medicalField.getText(), allergyField.getText()
-            );
-            patients.add(p);
-            db.savePatient(p); // SAVE TO DATABASE
+                    medicalField.getText(), allergyField.getText());
+            
+            patients.add(patient);
+            db.savePatient(patient);
             updatePatientsTable(doctorPatientsModel);
             if (adminPatientsModel != null) updatePatientsTable(adminPatientsModel);
-            JOptionPane.showMessageDialog(dialog, "Patient added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(dialog, "Patient added successfully!");
             dialog.dispose();
         });
-        dialog.add(new JLabel()); dialog.add(saveBtn);
+
+        dialog.add(new JLabel());
+        dialog.add(saveBtn);
         dialog.setVisible(true);
     }
 
-    private void updatePatientsTable(DefaultTableModel model) {
-        if (model == null) return;
-        model.setRowCount(0);
-        for (Patient p : patients) {
-            model.addRow(new Object[]{p.name, p.age, p.gender, p.bloodType, p.phone, p.email});
-        }
-    }
-
-    private void addAppointmentDialog() {
-        if (doctors.isEmpty() || patients.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Add patients and doctors first.", "Error", JOptionPane.ERROR_MESSAGE);
+    private void showAddAppointmentDialog() {
+        if (patients.isEmpty() || doctors.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No patients or doctors available!");
             return;
         }
 
         JDialog dialog = new JDialog(this, "Schedule Appointment", true);
-        dialog.setSize(500, 450);
-        dialog.setLayout(new GridLayout(7, 2, 5, 5));
+        dialog.setSize(400, 300);
         dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new GridLayout(7, 2, 5, 5));
 
         JComboBox<String> patientCombo = new JComboBox<>();
         for (Patient p : patients) patientCombo.addItem(p.name);
@@ -792,42 +637,114 @@ public class HMSNeumorphicAppModern extends JFrame {
         dialog.add(new JLabel("Time (HH:MM):")); dialog.add(timeField);
         dialog.add(new JLabel("Notes:")); dialog.add(notesField);
 
-        JButton saveBtn = new JButton("Save");
-        applyNeumorphicButton(saveBtn);
+        JButton saveBtn = createStyledButton("Save", ACCENT_COLOR);
         saveBtn.addActionListener(e -> {
             String date = dateField.getText().trim();
             String time = timeField.getText().trim();
 
             if (date.isEmpty() || time.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Date and Time are required!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Date and Time are required!");
                 return;
             }
 
             if (!isValidDate(date)) {
-                JOptionPane.showMessageDialog(dialog, "Date must be in DD/MM/YYYY format and not in the past!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid date!");
                 return;
             }
 
             if (!isValidTime(time)) {
-                JOptionPane.showMessageDialog(dialog, "Time must be in HH:MM format (24-hour)!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid time!");
                 return;
             }
 
-            Appointment a = new Appointment(
-                    (String) patientCombo.getSelectedItem(),
-                    (String) doctorCombo.getSelectedItem(),
-                    (String) typeCombo.getSelectedItem(),
-                    date, time, notesField.getText()
+            Appointment appointment = new Appointment(
+                (String) patientCombo.getSelectedItem(),
+                (String) doctorCombo.getSelectedItem(),
+                (String) typeCombo.getSelectedItem(),
+                date, time, notesField.getText()
             );
-            appointments.add(a);
-            db.saveAppointment(a); // SAVE TO DATABASE
+            
+            appointments.add(appointment);
+            db.saveAppointment(appointment);
             updateAppointmentsTable(doctorAppointmentsModel);
             if (adminAppointmentsModel != null) updateAppointmentsTable(adminAppointmentsModel);
-            JOptionPane.showMessageDialog(dialog, "Appointment scheduled successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(dialog, "Appointment scheduled!");
             dialog.dispose();
         });
-        dialog.add(new JLabel()); dialog.add(saveBtn);
+
+        dialog.add(new JLabel());
+        dialog.add(saveBtn);
         dialog.setVisible(true);
+    }
+
+    private void showCreateBillDialog() {
+        if (patients.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No patients available!");
+            return;
+        }
+
+        JDialog dialog = new JDialog(this, "Create Bill", true);
+        dialog.setSize(400, 400);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+        
+        JComboBox<String> patientCombo = new JComboBox<>();
+        for (Patient p : patients) patientCombo.addItem(p.name);
+
+        JList<String> servicesList = new JList<>();
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Service s : services) {
+            listModel.addElement(s.name + " - $" + s.price);
+        }
+        servicesList.setModel(listModel);
+        servicesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        formPanel.add(new JLabel("Patient:"));
+        formPanel.add(patientCombo);
+        formPanel.add(new JLabel("Services:"));
+        formPanel.add(new JScrollPane(servicesList));
+
+        JButton saveBtn = createStyledButton("Generate Bill", ACCENT_COLOR);
+        saveBtn.addActionListener(e -> {
+            List<String> selected = servicesList.getSelectedValuesList();
+            if (selected.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Select at least one service!");
+                return;
+            }
+
+            List<Service> selectedServices = new ArrayList<>();
+            double total = 0;
+            for (String serviceStr : selected) {
+                for (Service s : services) {
+                    if (serviceStr.contains(s.name)) {
+                        selectedServices.add(s);
+                        total += s.price;
+                        break;
+                    }
+                }
+            }
+
+            Bill bill = new Bill((String) patientCombo.getSelectedItem(), selectedServices, total);
+            bills.add(bill);
+            db.saveBill(bill);
+            updateBillingTable();
+            JOptionPane.showMessageDialog(dialog, "Bill created! Total: $" + total);
+            dialog.dispose();
+        });
+
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(saveBtn, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
+    private void updatePatientsTable(DefaultTableModel model) {
+        if (model == null) return;
+        model.setRowCount(0);
+        for (Patient p : patients) {
+            model.addRow(new Object[]{p.name, p.age, p.gender, p.bloodType, p.phone, p.email});
+        }
     }
 
     private void updateAppointmentsTable(DefaultTableModel model) {
@@ -838,45 +755,128 @@ public class HMSNeumorphicAppModern extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(HMSNeumorphicAppModern::new);
+    private void updateDoctorsTable() {
+        adminDoctorsModel.setRowCount(0);
+        for (Doctor d : doctors) {
+            adminDoctorsModel.addRow(new Object[]{d.name, d.specialty, d.phone});
+        }
     }
 
-    // ------------------- Data Classes -------------------
+    private void updateBillingTable() {
+        adminBillingModel.setRowCount(0);
+        for (Bill b : bills) {
+            StringBuilder servicesStr = new StringBuilder();
+            for (int i = 0; i < b.services.size(); i++) {
+                servicesStr.append(b.services.get(i).name);
+                if (i < b.services.size() - 1) servicesStr.append(", ");
+            }
+            adminBillingModel.addRow(new Object[]{b.patientName, servicesStr.toString(), "$" + b.total});
+        }
+    }
+
+    private void initDoctorDashboard() {
+        JPanel doctorPanel = new JPanel(new BorderLayout());
+        doctorPanel.setBackground(BACKGROUND_COLOR);
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(PRIMARY_COLOR);
+        headerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
+        
+        JLabel titleLabel = new JLabel("Doctor Dashboard");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setForeground(Color.WHITE);
+        
+        JButton logoutBtn = createStyledButton("Logout", new Color(120, 120, 120));
+        logoutBtn.addActionListener(e -> cardLayout.show(mainPanel, "login"));
+        
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(logoutBtn, BorderLayout.EAST);
+        doctorPanel.add(headerPanel, BorderLayout.NORTH);
+
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
+        tabbedPane.add("Patients", createPatientsTab(false));
+        tabbedPane.add("Appointments", createAppointmentsTab(false));
+
+        doctorPanel.add(tabbedPane, BorderLayout.CENTER);
+        mainPanel.add(doctorPanel, "doctor");
+    }
+
+    // Validation methods
+    private boolean isValidGhanaPhone(String phone) {
+        return phone.matches("^(02|03|04|05)\\d{8}$");
+    }
+
+    private boolean isValidEmail(String email) {
+        return email.matches("^[\\w.-]+@[\\w.-]+\\.\\w+$");
+    }
+
+    private boolean isValidAge(String age) {
+        try {
+            int ageInt = Integer.parseInt(age);
+            return ageInt > 0 && ageInt <= 150;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean isValidDate(String date) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            sdf.setLenient(false);
+            sdf.parse(date);
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
+    }
+
+    private boolean isValidTime(String time) {
+        return time.matches("^([01]?\\d|2[0-3]):[0-5]\\d$");
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new HMSNeumorphicAppModern());
+    }
+
+    // Data classes
     static class Patient {
         String name, age, gender, bloodType, phone, email, address, emergency, medicalHistory, allergies;
-        public Patient(String name, String age, String gender, String bloodType,
-                       String phone, String email, String address, String emergency,
-                       String medicalHistory, String allergies) {
-            this.name = name; this.age = age; this.gender = gender; this.bloodType = bloodType;
-            this.phone = phone; this.email = email; this.address = address; this.emergency = emergency;
-            this.medicalHistory = medicalHistory; this.allergies = allergies;
-        }
-        public String toString() {
-            return "Name: "+name+"\nAge: "+age+"\nGender: "+gender+"\nBlood: "+bloodType+
-                    "\nPhone: "+phone+"\nEmail: "+email+"\nAddress: "+address+
-                    "\nEmergency: "+emergency+"\nHistory: "+medicalHistory+"\nAllergies: "+allergies;
+        
+        public Patient(String name, String age, String gender, String bloodType, String phone, 
+                      String email, String address, String emergency, String medicalHistory, String allergies) {
+            this.name = name;
+            this.age = age;
+            this.gender = gender;
+            this.bloodType = bloodType;
+            this.phone = phone;
+            this.email = email;
+            this.address = address;
+            this.emergency = emergency;
+            this.medicalHistory = medicalHistory;
+            this.allergies = allergies;
         }
     }
 
     static class Doctor {
         String name, specialty, phone;
         public Doctor(String name, String specialty, String phone) {
-            this.name = name; this.specialty = specialty; this.phone = phone;
-        }
-        public String toString() {
-            return "Name: "+name+"\nSpecialty: "+specialty+"\nPhone: "+phone;
+            this.name = name;
+            this.specialty = specialty;
+            this.phone = phone;
         }
     }
 
     static class Appointment {
         String patient, doctor, type, date, time, notes;
         public Appointment(String patient, String doctor, String type, String date, String time, String notes) {
-            this.patient = patient; this.doctor = doctor; this.type = type;
-            this.date = date; this.time = time; this.notes = notes;
-        }
-        public String toString() {
-            return "Patient: "+patient+"\nDoctor: "+doctor+"\nType: "+type+"\nDate: "+date+"\nTime: "+time+"\nNotes: "+notes;
+            this.patient = patient;
+            this.doctor = doctor;
+            this.type = type;
+            this.date = date;
+            this.time = time;
+            this.notes = notes;
         }
     }
 
@@ -884,7 +884,8 @@ public class HMSNeumorphicAppModern extends JFrame {
         String name;
         double price;
         public Service(String name, double price) {
-            this.name = name; this.price = price;
+            this.name = name;
+            this.price = price;
         }
     }
 
@@ -897,291 +898,175 @@ public class HMSNeumorphicAppModern extends JFrame {
             this.services = services;
             this.total = total;
         }
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Patient: ").append(patientName).append("\n");
-            sb.append("Services:\n");
-            for (Service s : services) {
-                sb.append("  - ").append(s.name).append(": $").append(s.price).append("\n");
-            }
-            sb.append("Total Amount: $").append(total);
-            return sb.toString();
-        }
     }
 }
 
-// ------------------- DATABASE MANAGER CLASS -------------------
+// Database Manager
 class DatabaseManager {
-    private static final String DB_URL = "jdbc:sqlite:hospital_data.db";
     private Connection conn;
-
+    
     public DatabaseManager() {
         try {
-            conn = DriverManager.getConnection(DB_URL);
+            conn = DriverManager.getConnection("jdbc:sqlite:hospital_data.db");
             createTables();
-            System.out.println("✓ Database connected successfully!");
         } catch (SQLException e) {
-            System.err.println("✗ Database connection error: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage());
         }
     }
-
-    private void createTables() {
-        String patientsTable = """
-            CREATE TABLE IF NOT EXISTS patients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                age TEXT,
-                gender TEXT,
-                blood_type TEXT,
-                phone TEXT,
-                email TEXT,
-                address TEXT,
-                emergency_contact TEXT,
-                medical_history TEXT,
-                allergies TEXT
-            )
-        """;
-
-        String doctorsTable = """
-            CREATE TABLE IF NOT EXISTS doctors (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                specialty TEXT,
-                phone TEXT
-            )
-        """;
-
-        String appointmentsTable = """
-            CREATE TABLE IF NOT EXISTS appointments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                patient_name TEXT NOT NULL,
-                doctor_name TEXT NOT NULL,
-                type TEXT,
-                date TEXT,
-                time TEXT,
-                notes TEXT
-            )
-        """;
-
-        String billsTable = """
-            CREATE TABLE IF NOT EXISTS bills (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                patient_name TEXT NOT NULL,
-                services TEXT,
-                total REAL
-            )
-        """;
-
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute(patientsTable);
-            stmt.execute(doctorsTable);
-            stmt.execute(appointmentsTable);
-            stmt.execute(billsTable);
-            System.out.println("✓ Database tables created/verified!");
-        } catch (SQLException e) {
-            System.err.println("✗ Error creating tables: " + e.getMessage());
-        }
-    }
-
-    public void savePatient(HMSNeumorphicAppModern.Patient patient) {
-        String sql = "INSERT INTO patients (name, age, gender, blood_type, phone, email, address, emergency_contact, medical_history, allergies) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    private void createTables() throws SQLException {
+        String[] tables = {
+            "CREATE TABLE IF NOT EXISTS patients (id INTEGER PRIMARY KEY, name TEXT, age TEXT, gender TEXT, blood_type TEXT, phone TEXT, email TEXT, address TEXT, emergency_contact TEXT, medical_history TEXT, allergies TEXT)",
+            "CREATE TABLE IF NOT EXISTS doctors (id INTEGER PRIMARY KEY, name TEXT, specialty TEXT, phone TEXT)",
+            "CREATE TABLE IF NOT EXISTS appointments (id INTEGER PRIMARY KEY, patient_name TEXT, doctor_name TEXT, type TEXT, date TEXT, time TEXT, notes TEXT)",
+            "CREATE TABLE IF NOT EXISTS bills (id INTEGER PRIMARY KEY, patient_name TEXT, services TEXT, total REAL)"
+        };
         
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, patient.name);
-            pstmt.setString(2, patient.age);
-            pstmt.setString(3, patient.gender);
-            pstmt.setString(4, patient.bloodType);
-            pstmt.setString(5, patient.phone);
-            pstmt.setString(6, patient.email);
-            pstmt.setString(7, patient.address);
-            pstmt.setString(8, patient.emergency);
-            pstmt.setString(9, patient.medicalHistory);
-            pstmt.setString(10, patient.allergies);
-            pstmt.executeUpdate();
-            System.out.println("✓ Patient saved to database!");
-        } catch (SQLException e) {
-            System.err.println("✗ Error saving patient: " + e.getMessage());
+        for (String sql : tables) {
+            conn.createStatement().execute(sql);
         }
     }
-
+    
+    public void savePatient(HMSNeumorphicAppModern.Patient p) {
+        try (PreparedStatement stmt = conn.prepareStatement(
+            "INSERT INTO patients (name, age, gender, blood_type, phone, email, address, emergency_contact, medical_history, allergies) VALUES (?,?,?,?,?,?,?,?,?,?)")) {
+            stmt.setString(1, p.name);
+            stmt.setString(2, p.age);
+            stmt.setString(3, p.gender);
+            stmt.setString(4, p.bloodType);
+            stmt.setString(5, p.phone);
+            stmt.setString(6, p.email);
+            stmt.setString(7, p.address);
+            stmt.setString(8, p.emergency);
+            stmt.setString(9, p.medicalHistory);
+            stmt.setString(10, p.allergies);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
     public List<HMSNeumorphicAppModern.Patient> loadPatients() {
         List<HMSNeumorphicAppModern.Patient> patients = new ArrayList<>();
-        String sql = "SELECT * FROM patients";
-        
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
+        try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM patients")) {
             while (rs.next()) {
-                HMSNeumorphicAppModern.Patient p = new HMSNeumorphicAppModern.Patient(
-                    rs.getString("name"),
-                    rs.getString("age"),
-                    rs.getString("gender"),
-                    rs.getString("blood_type"),
-                    rs.getString("phone"),
-                    rs.getString("email"),
-                    rs.getString("address"),
-                    rs.getString("emergency_contact"),
-                    rs.getString("medical_history"),
-                    rs.getString("allergies")
-                );
-                patients.add(p);
+                patients.add(new HMSNeumorphicAppModern.Patient(
+                    rs.getString("name"), rs.getString("age"), rs.getString("gender"),
+                    rs.getString("blood_type"), rs.getString("phone"), rs.getString("email"),
+                    rs.getString("address"), rs.getString("emergency_contact"),
+                    rs.getString("medical_history"), rs.getString("allergies")
+                ));
             }
-            System.out.println("✓ Loaded " + patients.size() + " patients");
         } catch (SQLException e) {
-            System.err.println("✗ Error loading patients: " + e.getMessage());
+            e.printStackTrace();
         }
-        
         return patients;
     }
-
-    public void saveDoctor(HMSNeumorphicAppModern.Doctor doctor) {
-        String sql = "INSERT INTO doctors (name, specialty, phone) VALUES (?, ?, ?)";
-        
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, doctor.name);
-            pstmt.setString(2, doctor.specialty);
-            pstmt.setString(3, doctor.phone);
-            pstmt.executeUpdate();
-            System.out.println("✓ Doctor saved to database!");
+    
+    public void saveDoctor(HMSNeumorphicAppModern.Doctor d) {
+        try (PreparedStatement stmt = conn.prepareStatement(
+            "INSERT INTO doctors (name, specialty, phone) VALUES (?,?,?)")) {
+            stmt.setString(1, d.name);
+            stmt.setString(2, d.specialty);
+            stmt.setString(3, d.phone);
+            stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("✗ Error saving doctor: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
+    
     public List<HMSNeumorphicAppModern.Doctor> loadDoctors() {
         List<HMSNeumorphicAppModern.Doctor> doctors = new ArrayList<>();
-        String sql = "SELECT * FROM doctors";
-        
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
+        try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM doctors")) {
             while (rs.next()) {
-                HMSNeumorphicAppModern.Doctor d = new HMSNeumorphicAppModern.Doctor(
-                    rs.getString("name"),
-                    rs.getString("specialty"),
-                    rs.getString("phone")
-                );
-                doctors.add(d);
+                doctors.add(new HMSNeumorphicAppModern.Doctor(
+                    rs.getString("name"), rs.getString("specialty"), rs.getString("phone")
+                ));
             }
-            System.out.println("✓ Loaded " + doctors.size() + " doctors");
         } catch (SQLException e) {
-            System.err.println("✗ Error loading doctors: " + e.getMessage());
+            e.printStackTrace();
         }
-        
         return doctors;
     }
-
-    public void saveAppointment(HMSNeumorphicAppModern.Appointment appointment) {
-        String sql = "INSERT INTO appointments (patient_name, doctor_name, type, date, time, notes) VALUES (?, ?, ?, ?, ?, ?)";
-        
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, appointment.patient);
-            pstmt.setString(2, appointment.doctor);
-            pstmt.setString(3, appointment.type);
-            pstmt.setString(4, appointment.date);
-            pstmt.setString(5, appointment.time);
-            pstmt.setString(6, appointment.notes);
-            pstmt.executeUpdate();
-            System.out.println("✓ Appointment saved to database!");
+    
+    public void saveAppointment(HMSNeumorphicAppModern.Appointment a) {
+        try (PreparedStatement stmt = conn.prepareStatement(
+            "INSERT INTO appointments (patient_name, doctor_name, type, date, time, notes) VALUES (?,?,?,?,?,?)")) {
+            stmt.setString(1, a.patient);
+            stmt.setString(2, a.doctor);
+            stmt.setString(3, a.type);
+            stmt.setString(4, a.date);
+            stmt.setString(5, a.time);
+            stmt.setString(6, a.notes);
+            stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("✗ Error saving appointment: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
+    
     public List<HMSNeumorphicAppModern.Appointment> loadAppointments() {
         List<HMSNeumorphicAppModern.Appointment> appointments = new ArrayList<>();
-        String sql = "SELECT * FROM appointments";
-        
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
+        try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM appointments")) {
             while (rs.next()) {
-                HMSNeumorphicAppModern.Appointment a = new HMSNeumorphicAppModern.Appointment(
-                    rs.getString("patient_name"),
-                    rs.getString("doctor_name"),
-                    rs.getString("type"),
-                    rs.getString("date"),
-                    rs.getString("time"),
-                    rs.getString("notes")
-                );
-                appointments.add(a);
+                appointments.add(new HMSNeumorphicAppModern.Appointment(
+                    rs.getString("patient_name"), rs.getString("doctor_name"), rs.getString("type"),
+                    rs.getString("date"), rs.getString("time"), rs.getString("notes")
+                ));
             }
-            System.out.println("✓ Loaded " + appointments.size() + " appointments");
         } catch (SQLException e) {
-            System.err.println("✗ Error loading appointments: " + e.getMessage());
+            e.printStackTrace();
         }
-        
         return appointments;
     }
-
-    public void saveBill(HMSNeumorphicAppModern.Bill bill) {
-        String sql = "INSERT INTO bills (patient_name, services, total) VALUES (?, ?, ?)";
-        
-        StringBuilder servicesStr = new StringBuilder();
-        for (int i = 0; i < bill.services.size(); i++) {
-            servicesStr.append(bill.services.get(i).name).append(":").append(bill.services.get(i).price);
-            if (i < bill.services.size() - 1) servicesStr.append(",");
-        }
-        
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, bill.patientName);
-            pstmt.setString(2, servicesStr.toString());
-            pstmt.setDouble(3, bill.total);
-            pstmt.executeUpdate();
-            System.out.println("✓ Bill saved to database!");
+    
+    public void saveBill(HMSNeumorphicAppModern.Bill b) {
+        try (PreparedStatement stmt = conn.prepareStatement(
+            "INSERT INTO bills (patient_name, services, total) VALUES (?,?,?)")) {
+            StringBuilder servicesStr = new StringBuilder();
+            for (HMSNeumorphicAppModern.Service s : b.services) {
+                servicesStr.append(s.name).append(":$").append(s.price).append(",");
+            }
+            stmt.setString(1, b.patientName);
+            stmt.setString(2, servicesStr.toString());
+            stmt.setDouble(3, b.total);
+            stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("✗ Error saving bill: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
+    
     public List<HMSNeumorphicAppModern.Bill> loadBills() {
         List<HMSNeumorphicAppModern.Bill> bills = new ArrayList<>();
-        String sql = "SELECT * FROM bills";
-        
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
+        try (ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM bills")) {
             while (rs.next()) {
                 String servicesStr = rs.getString("services");
-                List<HMSNeumorphicAppModern.Service> servicesList = new ArrayList<>();
-                
-                if (servicesStr != null && !servicesStr.isEmpty()) {
-                    String[] serviceParts = servicesStr.split(",");
-                    for (String part : serviceParts) {
-                        String[] namePrice = part.split(":");
-                        if (namePrice.length == 2) {
-                            servicesList.add(new HMSNeumorphicAppModern.Service(
-                                namePrice[0], 
-                                Double.parseDouble(namePrice[1])
+                List<HMSNeumorphicAppModern.Service> services = new ArrayList<>();
+                if (servicesStr != null) {
+                    String[] parts = servicesStr.split(",");
+                    for (String part : parts) {
+                        String[] serviceParts = part.split(":\\$");
+                        if (serviceParts.length == 2) {
+                            services.add(new HMSNeumorphicAppModern.Service(
+                                serviceParts[0], Double.parseDouble(serviceParts[1])
                             ));
                         }
         }
                 }
-                
-                HMSNeumorphicAppModern.Bill b = new HMSNeumorphicAppModern.Bill(
-                    rs.getString("patient_name"),
-                    servicesList,
-                    rs.getDouble("total")
-                );
-                bills.add(b);
+                bills.add(new HMSNeumorphicAppModern.Bill(
+                    rs.getString("patient_name"), services, rs.getDouble("total")
+                ));
             }
-            System.out.println("✓ Loaded " + bills.size() + " bills");
         } catch (SQLException e) {
-            System.err.println("✗ Error loading bills: " + e.getMessage());
+            e.printStackTrace();
         }
-        
         return bills;
     }
-
+    
     public void close() {
         try {
-            if (conn != null) {
-                conn.close();
-                System.out.println("✓ Database connection closed");
-            }
+            if (conn != null) conn.close();
         } catch (SQLException e) {
-            System.err.println("✗ Error closing connection: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
-
