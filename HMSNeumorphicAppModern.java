@@ -1155,7 +1155,7 @@ class DatabaseManager {
                                 Double.parseDouble(namePrice[1])
                             ));
                         }
-                    }
+        }
                 }
                 
                 HMSNeumorphicAppModern.Bill b = new HMSNeumorphicAppModern.Bill(
